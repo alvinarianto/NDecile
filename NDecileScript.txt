@@ -1,0 +1,87 @@
+------------------------SPLIT DECILE 10 into 3 more decile--------------------------------
+
+with a as (
+select *,
+       case when [ST Score] = 'No Match' then 'No Match'
+	        when [ST Score] = 'No Score' then 'No Score'
+	        when [ST Score] > 797 then '1'
+	        when [ST Score] > 749 then '2'
+			when [ST Score] > 708 then '3'
+			when [ST Score] > 674 then '4'
+			when [ST Score] > 647 then '5'
+			when [ST Score] > 624 then '6'
+			when [ST Score] > 603 then '7'
+			when [ST Score] > 581 then '8'
+			when [ST Score] > 547 then '9'
+			when [ST Score] <= 547 then '10'
+			else '-999' end as Decile
+
+from ADS_AA.dbo.alv_Shopee_Backtest_Final_Dec23
+)
+, b as
+(
+select *
+,NTILE(3) over(ORDER BY [ST Score] desc) Dec_ten
+,1+(rank() over (order by [ST Score] desc)-1) * 3 / count(1) over (partition by (select 1)) as new_Dec_ten
+
+	  
+from a
+where Decile ='10'
+)
+
+select *
+,case when Decile in ('1','2','3','4','5','6','7','8','9','-999','No Match','No Score') 
+            then Decile
+			else Decile + '.' + cast(new_Dec_ten as varchar(10)) end as NDecile
+into ADS_AA.dbo.alv_Shopee_NDecile
+from b
+
+--not in ('No Match','No Score')
+-----------------------------------------------------------------------------------------------------------
+------------------------------SPLIT DECILE 10 into 2 more---------------------------------------------------
+-------------------------------------------------------------------------------------------------------------
+
+with a as (
+select *,
+       case when [ST Score] = 'No Match' then 'No Match'
+	        when [ST Score] = 'No Score' then 'No Score'
+	        when [ST Score] > 797 then '1'
+	        when [ST Score] > 749 then '2'
+			when [ST Score] > 708 then '3'
+			when [ST Score] > 674 then '4'
+			when [ST Score] > 647 then '5'
+			when [ST Score] > 624 then '6'
+			when [ST Score] > 603 then '7'
+			when [ST Score] > 581 then '8'
+			when [ST Score] > 547 then '9'
+			when [ST Score] <= 547 then '10'
+			else '-999' end as Decile
+
+from ADS_AA.dbo.alv_Shopee_Backtest_Final_Dec23
+)
+, b as
+(
+select *
+,NTILE(3) over(ORDER BY [ST Score] desc) Dec_ten
+,1+(rank() over (order by [ST Score] desc)-1) * 2 / count(1) over (partition by (select 1)) as new_Dec_ten
+
+	  
+from a
+where Decile ='10'
+)
+
+select *
+,case when Decile in ('1','2','3','4','5','6','7','8','9','-999','No Match','No Score') 
+            then Decile
+			else Decile + '.' + cast(new_Dec_ten as varchar(10)) end as twoDecile
+into ADS_AA.dbo.alv_Shopee_NDecile2
+from b
+
+
+-----------------------------------------------------------------------------------------
+select NDecile,count(*) from ADS_AA.dbo.alv_Shopee_NDecile
+group by NDecile
+
+
+select twoDecile,count(*) from ADS_AA.dbo.alv_Shopee_NDecile2
+group by twoDecile
